@@ -1,18 +1,27 @@
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../App';
 import { HomeIcon, ArrowLeftIcon, CogIcon, BellIcon, CalendarIcon, XMarkIcon } from './Icons';
 import { AppointmentStatus } from '../types';
 
+// Hack to prevent garbage collection of the utterance object, which causes audio cuts
+declare global {
+    interface Window {
+        currentUtterance?: SpeechSynthesisUtterance;
+    }
+}
+
 export const Layout: React.FC<{ children: React.ReactNode; title: string; overrideBackground?: boolean; }> = ({ children, title, overrideBackground = false }) => {
-    const { translations, background, openSettings, appointments, language, dismissedNotificationIds, dismissNotification, spokenAlertIds } = useAppContext();
+    const { translations, background, openSettings, appointments, language, dismissedNotificationIds, dismissNotification } = useAppContext();
     const navigate = useNavigate();
     const location = useLocation();
     
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const notificationRef = useRef<HTMLDivElement>(null);
+    
+    // State to track which alerts are currently valid and triggered based on time
+    const [activeAlertIds, setActiveAlertIds] = useState<string[]>([]);
     
     // Hide bottom nav on Home (Login) page AND Pets List page. 
     // normalize path to remove trailing slash for consistent matching
@@ -23,16 +32,25 @@ export const Layout: React.FC<{ children: React.ReactNode; title: string; overri
     const showBottomNav = !['/', '/pets'].includes(normalizedPath);
     const canGoBack = location.state?.from;
     const hasBg = background || overrideBackground;
+
+    // Helper to translate appointment types
+    const getTranslatedType = (type: string) => {
+        const key = type.toLowerCase().replace(/[^a-z0-9]/gi, '');
+        return translations[key] || type;
+    };
     
     // Notification Logic: Get appointments in the next 24 hours that are NOT dismissed
     const now = new Date();
-    const next24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    // Add a small buffer (e.g., 10 minutes) to the 24h window. 
+    // This ensures that if the 24h voice alert triggers exactly at 24h00m, 
+    // the item definitely appears in the list so it can be dismissed.
+    const next24hBuffer = new Date(now.getTime() + (24 * 60 * 60 * 1000) + (10 * 60 * 1000)); 
     
     const upcomingNotifications = appointments.filter(appt => {
         const apptDate = new Date(appt.dateTime);
         return appt.status === AppointmentStatus.Scheduled && 
                apptDate > now && 
-               apptDate <= next24h &&
+               apptDate <= next24hBuffer &&
                !dismissedNotificationIds.includes(appt.id); // Filter out dismissed ones
     }).sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
 
@@ -52,66 +70,135 @@ export const Layout: React.FC<{ children: React.ReactNode; title: string; overri
         };
     }, []);
 
-    // Voice Alert Logic (TTS)
+    // 1. Time Checker: Identifies appointments that need alerting
     useEffect(() => {
-        const checkAndSpeak = () => {
+        const checkTime = () => {
             const currentTime = new Date().getTime();
+            const newTriggeredIds: string[] = [];
 
             appointments.forEach(appt => {
                 if (appt.status !== AppointmentStatus.Scheduled) return;
                 
-                // If the user has dismissed this notification, don't speak about it
-                if (dismissedNotificationIds.includes(appt.id)) return;
-
                 const apptTime = new Date(appt.dateTime).getTime();
                 const diffMs = apptTime - currentTime;
-                const diffHours = diffMs / (1000 * 60 * 60);
+                // Use minutes for higher precision to match the visual countdowns exactly
+                const diffMinutes = diffMs / (1000 * 60); 
 
-                // Thresholds (approximate windows to catch the event)
-                // 24 Hours warning (between 23.9 and 24.1 hours)
-                if (diffHours >= 23.9 && diffHours <= 24.1) {
-                    const alertKey = `${appt.id}-24h`;
-                    // Check global ref instead of local
-                    if (!spokenAlertIds.current.has(alertKey)) {
-                        speakAlert(translations.voiceAlertDay.replace('{pet}', appt.petName));
-                        spokenAlertIds.current.add(alertKey);
-                    }
+                // 24 Hours warning
+                // Trigger exactly between 23h 59m and 24h 00m (1439 - 1440 minutes)
+                if (diffMinutes >= 1439 && diffMinutes <= 1440) {
+                     newTriggeredIds.push(`${appt.id}-24h`);
                 }
 
-                // 1 Hour warning (between 0.9 and 1.1 hours)
-                if (diffHours >= 0.9 && diffHours <= 1.1) {
-                    const alertKey = `${appt.id}-1h`;
-                    if (!spokenAlertIds.current.has(alertKey)) {
-                        speakAlert(translations.voiceAlertHour.replace('{pet}', appt.petName));
-                        spokenAlertIds.current.add(alertKey);
-                    }
+                // 1 Hour warning
+                // Trigger exactly between 59m and 60m. 
+                // The visual "green" flash (soon) starts at <= 60 minutes.
+                if (diffMinutes >= 59 && diffMinutes <= 60) {
+                    newTriggeredIds.push(`${appt.id}-1h`);
                 }
             });
+
+            // Update state if we found new alerts that aren't already tracked locally
+            if (newTriggeredIds.length > 0) {
+                 setActiveAlertIds(prev => {
+                     // Merge new IDs with existing ones, avoiding duplicates
+                     const combined = new Set([...prev, ...newTriggeredIds]);
+                     return Array.from(combined);
+                 });
+            }
         };
 
-        const speakAlert = (text: string) => {
-            if ('speechSynthesis' in window) {
-                // Cancel any ongoing speech to avoid queue pile-up if user navigates fast
-                window.speechSynthesis.cancel();
+        // Check every 10 seconds for better precision than 60s, ensures we hit the 1-minute window
+        const intervalId = setInterval(checkTime, 10000);
+        checkTime(); // Run immediately
 
+        return () => clearInterval(intervalId);
+    }, [appointments]);
+
+
+    // 2. Audio Looper: Plays sound continuously for active, undismissed alerts
+    useEffect(() => {
+        // Filter out alerts that the user has explicitly dismissed globally
+        const pendingAlerts = activeAlertIds.filter(alertId => {
+            const baseId = alertId.split('-')[0];
+            return !dismissedNotificationIds.includes(baseId);
+        });
+
+        if (pendingAlerts.length === 0) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                window.currentUtterance = undefined;
+            }
+            return;
+        }
+
+        // Pick the first pending alert to speak
+        const currentAlertKey = pendingAlerts[0];
+        const [apptId, type] = currentAlertKey.split('-');
+        const appt = appointments.find(a => a.id === apptId);
+
+        if (!appt) return;
+
+        const translatedType = getTranslatedType(appt.type);
+
+        const text = (type === '24h' ? translations.voiceAlertDay : translations.voiceAlertHour)
+            .replace('{pet}', appt.petName)
+            .replace('{type}', translatedType);
+
+        let timer: ReturnType<typeof setTimeout>;
+
+        const speakLoop = () => {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // Ensure clean slate
+                
                 const utterance = new SpeechSynthesisUtterance(text);
-                // Try to set voice based on language
-                utterance.lang = language === 'pt' ? 'pt-BR' : 'en-US';
-                utterance.rate = 1; // Normal speed
-                utterance.pitch = 1;
+                const targetLang = language === 'pt' ? 'pt-BR' : 'en-US';
+                utterance.lang = targetLang;
+                utterance.rate = 1;
+                
+                // Voice selection logic:
+                // 1. Try to find a "Male" voice for the target language.
+                // 2. Fallback to "Google" voice (usually high quality).
+                // 3. Fallback to any voice for the language.
+                const voices = window.speechSynthesis.getVoices();
+                
+                const maleVoice = voices.find(v => 
+                    v.lang === targetLang && 
+                    (v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('masculino'))
+                );
+                
+                const googleVoice = voices.find(v => v.lang === targetLang && v.name.includes('Google'));
+                
+                utterance.voice = maleVoice || googleVoice || voices.find(v => v.lang === targetLang) || null;
+                
+                // CRITICAL FIX: Assign utterance to window to prevent Garbage Collection from cutting audio
+                window.currentUtterance = utterance;
+
+                // When finished, wait 5 seconds and speak again (Loop)
+                utterance.onend = () => {
+                    timer = setTimeout(speakLoop, 5000);
+                };
                 
                 window.speechSynthesis.speak(utterance);
             }
         };
 
-        // Check every 60 seconds
-        const intervalId = setInterval(checkAndSpeak, 60000);
-        
-        // Run once immediately on mount/update to check current status
-        checkAndSpeak();
+        // We need to ensure voices are loaded before speaking (Chrome issue)
+        if (window.speechSynthesis.getVoices().length === 0) {
+            window.speechSynthesis.onvoiceschanged = speakLoop;
+        } else {
+            speakLoop();
+        }
 
-        return () => clearInterval(intervalId);
-    }, [appointments, language, translations, dismissedNotificationIds, spokenAlertIds]);
+        return () => {
+            clearTimeout(timer);
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                window.currentUtterance = undefined;
+            }
+        };
+    }, [activeAlertIds, dismissedNotificationIds, appointments, language, translations]);
+
     
     return (
         <div className={`min-h-screen text-text-light dark:text-text-dark font-sans flex flex-col ${!hasBg ? 'bg-background-light dark:bg-background-dark' : 'bg-transparent'}`}>
@@ -149,7 +236,7 @@ export const Layout: React.FC<{ children: React.ReactNode; title: string; overri
                                                 </div>
                                                 <div className="flex-grow cursor-pointer" onClick={() => { navigate('/schedule'); setIsNotificationsOpen(false); }}>
                                                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {appt.petName} - {appt.type}
+                                                        {appt.petName} - {getTranslatedType(appt.type)}
                                                     </p>
                                                     <p className="text-xs text-gray-500 dark:text-gray-400">
                                                         {new Date(appt.dateTime).toLocaleString()}

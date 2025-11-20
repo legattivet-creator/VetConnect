@@ -39,7 +39,6 @@ export enum AppointmentType {
   Application = 'Application',
   Grooming = 'Grooming',
   ControlAnalysis = 'Control Analysis',
-  Urgency = 'Urgency',
   DentalTreatment = 'Dental Treatment',
   ImagingExam = 'Imaging Exam',
   FollowUp = 'Follow-up',

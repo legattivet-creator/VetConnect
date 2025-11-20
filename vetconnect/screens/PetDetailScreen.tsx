@@ -51,7 +51,8 @@ export const PetDetailScreen: React.FC = () => {
             
             <div className="relative z-10">
                 <Layout title={translations.petDetails} overrideBackground={true}>
-                    <div className="p-4 sm:p-6 rounded-lg shadow-lg bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-sm">
+                    {/* Main Details Card */}
+                    <div className="p-4 sm:p-6 rounded-xl shadow-lg bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-sm">
                         <div className="flex flex-col md:flex-row md:space-x-8">
                             {/* First column: Photo */}
                             <div className="flex-shrink-0 mb-6 md:mb-0 text-center">
@@ -91,19 +92,17 @@ export const PetDetailScreen: React.FC = () => {
                         )}
                     </div>
                     
-                    {/* Footer Actions */}
-                    <footer className="bg-surface-light/70 dark:bg-surface-dark/70 backdrop-blur-md shadow-lg sticky bottom-0 z-10 border-t border-gray-200 dark:border-gray-700 mt-6 -mx-4 -mb-4 md:-mx-6 md:-mb-6">
-                        <nav className="max-w-4xl mx-auto p-2 flex justify-around items-center">
-                            <button onClick={() => navigate(`/appointment/new/${pet.id}`)} className="flex flex-col items-center text-secondary-dark dark:text-secondary-light hover:text-primary dark:hover:text-primary-light transition-colors">
-                                <CalendarIcon className="w-7 h-7" />
-                                <span className="text-xs font-medium">{translations.appointments}</span>
-                            </button>
-                            <button onClick={() => navigate(`/record/${pet.id}`, { state: { from: location.pathname } })} className="flex flex-col items-center text-secondary-dark dark:text-secondary-light hover:text-primary dark:hover:text-primary-light transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                                <span className="text-xs font-medium">{translations.medicalRecord}</span>
-                            </button>
-                        </nav>
-                    </footer>
+                    {/* Action Box - Styled exactly like the main details card above */}
+                    <div className="mt-4 p-3 rounded-xl shadow-lg bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-sm flex justify-around items-center">
+                        <button onClick={() => navigate(`/appointment/new/${pet.id}`)} className="flex flex-col items-center text-secondary-dark dark:text-secondary-light hover:text-primary dark:hover:text-primary-light transition-colors">
+                            <CalendarIcon className="w-7 h-7" />
+                            <span className="text-xs font-medium mt-1">{translations.appointments}</span>
+                        </button>
+                        <button onClick={() => navigate(`/record/${pet.id}`, { state: { from: location.pathname } })} className="flex flex-col items-center text-secondary-dark dark:text-secondary-light hover:text-primary dark:hover:text-primary-light transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <span className="text-xs font-medium mt-1">{translations.medicalRecord}</span>
+                        </button>
+                    </div>
                 </Layout>
             </div>
         </div>

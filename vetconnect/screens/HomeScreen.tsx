@@ -72,7 +72,7 @@ export const HomeScreen: React.FC = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 mt-1 border rounded-lg bg-white/50 dark:bg-black/20 focus:ring-primary focus:border-primary transition"
+              className="w-full px-4 py-2 mt-1 border rounded-lg bg-white/50 dark:bg-black/20 dark:text-white focus:ring-primary focus:border-primary transition"
               required
             />
           </div>
@@ -83,7 +83,7 @@ export const HomeScreen: React.FC = () => {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 mt-1 border rounded-lg bg-white/50 dark:bg-black/20 focus:ring-primary focus:border-primary transition"
+              className="w-full px-4 py-2 mt-1 border rounded-lg bg-white/50 dark:bg-black/20 dark:text-white focus:ring-primary focus:border-primary transition"
               required
             />
              <div className="flex items-center mt-2">
@@ -108,7 +108,7 @@ export const HomeScreen: React.FC = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2 mt-1 border rounded-lg bg-white/50 dark:bg-black/20 focus:ring-primary focus:border-primary transition"
+                  className="w-full px-4 py-2 mt-1 border rounded-lg bg-white/50 dark:bg-black/20 dark:text-white focus:ring-primary focus:border-primary transition"
                   required
                 />
               </div>
