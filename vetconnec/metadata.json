@@ -1,0 +1,9 @@
+{
+  "name": "VetConnect",
+  "description": "VetConnect: A premium application for managing your beloved pet's health, appointments, and records with elegance and ease.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
