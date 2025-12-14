@@ -1,0 +1,38 @@
+{
+  "name": "vetconnect",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@capacitor-community/native-audio": "^7.0.1",
+    "@capacitor-community/text-to-speech": "^6.1.0",
+    "@capacitor-mlkit/barcode-scanning": "^7.4.0",
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/browser": "^8.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/clipboard": "^8.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/filesystem": "^8.0.0",
+    "@capacitor/geolocation": "^8.0.0",
+    "@capacitor/ios": "^7.0.0",
+    "@capacitor/local-notifications": "^7.0.3",
+    "@capacitor/share": "^8.0.0",
+    "firebase": "^12.6.0",
+    "jspdf": "^3.0.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.5",
+    "webworker": "^0.8.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}
