@@ -7,10 +7,10 @@ import { Species, Gender, Behavior } from '../types';
 import { Layout } from '../components/Layout';
 import { compressImage } from '../utils';
 
-const dogBreeds = ['Affenpinscher', 'Afghan Hound', 'Airedale Terrier', 'Akita', 'Alaskan Malamute', 'American Staffordshire Terrier', 'American Water Spaniel', 'Australian Cattle Dog', 'Australian Shepherd', 'Australian Terrier', 'Basenji', 'Basset Hound', 'Beagle', 'Bearded Collie', 'Bedlington Terrier', 'Bernese Mountain Dog', 'Bichon Frise', 'Black and Tan Coonhound', 'Bloodhound', 'Border Collie', 'Border Terrier', 'Borzoi', 'Boston Terrier', 'Bouvier des Flandres', 'Boxer', 'Briard', 'Brittany', 'Brussels Griffon', 'Bulldog', 'Bullmastiff', 'Cairn Terrier', 'Cavalier King Charles Spaniel', 'Chesapeake Bay Retriever', 'Chihuahua', 'Chinese Crested', 'Chinese Shar-Pei', 'Chow Chow', 'Cocker Spaniel', 'Collie', 'Curly-Coated Retriever', 'Dachshund', 'Dalmatian', 'Doberman Pinscher', 'English Cocker Spaniel', 'English Setter', 'English Springer Spaniel', 'English Toy Spaniel', 'Eskimo Dog', 'Finnish Spitz', 'Flat-Coated Retriever', 'Fox Terrier', 'Foxhound', 'French Bulldog', 'German Shepherd', 'German Shorthaired Pointer', 'Giant Schnauzer', 'Golden Retriever', 'Gordon Setter', 'Great Dane', 'Great Pyrenees', 'Greyhound', 'Irish Setter', 'Irish Water Spaniel', 'Irish Wolfhound', 'Jack Russell Terrier', 'Japanese Chin', 'Keeshond', 'Kerry Blue Terrier', 'Komondor', 'Kuvasz', 'Labrador Retriever', 'Lakeland Terrier', 'Lhasa Apso', 'Maltese', 'Manchester Terrier', 'Mastiff', 'Mexican Hairless', 'Newfoundland', 'Norwegian Elkhound', 'Norwich Terrier', 'Old English Sheepdog', 'Otterhound', 'Papillon', 'Pekingese', 'Pointer', 'Pomeranian', 'Poodle', 'Pug', 'Puli', 'Rhodesian Ridgeback', 'Rottweiler', 'Saint Bernard', 'Saluki', 'Samoyed', 'Schipperke', 'Scottish Deerhound', 'Scottish Terrier', 'Sealyham Terrier', 'Shetland Sheepdog', 'Shih Tzu', 'Siberian Husky', 'Silky Terrier', 'Skye Terrier', 'Staffordshire Bull Terrier', 'Standard Schnauzer', 'Tibetan Spaniel', 'Tibetan Terrier', 'Vizsla', 'Weimaraner', 'Welsh Terrier', 'West Highland White Terrier', 'Whippet', 'Yorkshire Terrier', 'Other'];
-const dogBreedsPt = ['Affenpinscher', 'Galgo Afegão', 'Airedale Terrier', 'Akita', 'Malamute do Alasca', 'American Staffordshire Terrier', 'American Water Spaniel', 'Boiadeiro Australiano', 'Pastor Australiano', 'Terrier Australiano', 'Basenji', 'Basset Hound', 'Beagle', 'Bearded Collie', 'Bedlington Terrier', 'Boiadeiro de Berna', 'Bichon Frisé', 'Black and Tan Coonhound', 'Bloodhound', 'Border Collie', 'Border Terrier', 'Borzoi', 'Boston Terrier', 'Boiadeiro da Flandres', 'Boxer', 'Briard', 'Brittany', 'Griffon de Bruxelas', 'Buldogue', 'Bullmastiff', 'Cairn Terrier', 'Cavalier King Charles Spaniel', 'Chesapeake Bay Retriever', 'Chihuahua', 'Cão de Crista Chinês', 'Shar-Pei Chinês', 'Chow Chow', 'Cocker Spaniel', 'Collie', 'Curly-Coated Retriever', 'Dachshund', 'Dálmata', 'Doberman Pinscher', 'Cocker Spaniel Inglês', 'Setter Inglês', 'Springer Spaniel Inglês', 'English Toy Spaniel', 'Cão Esquimó', 'Spitz Finlandês', 'Flat-Coated Retriever', 'Fox Terrier', 'Foxhound', 'Buldogue Francês', 'Pastor Alemão', 'Braco Alemão de Pêlo Curto', 'Schnauzer Gigante', 'Golden Retriever', 'Setter Gordon', 'Dogue Alemão', 'Cão dos Pirenéus', 'Galgo Inglês', 'Setter Irlandês', 'Spaniel d\'Água Irlandês', 'Wolfhound Irlandês', 'Jack Russell Terrier', 'Chin Japonês', 'Keeshond', 'Kerry Blue Terrier', 'Komondor', 'Kuvasz', 'Labrador Retriever', 'Lakeland Terrier', 'Lhasa Apso', 'Maltês', 'Manchester Terrier', 'Mastim', 'Pelado Mexicano', 'Terra-nova', 'Elkhound Norueguês', 'Norwich Terrier', 'Old English Sheepdog', 'Lontreiro', 'Papillon', 'Pequinês', 'Pointer', 'Pomerânia', 'Poodle', 'Pug', 'Puli', 'Rhodesian Ridgeback', 'Rottweiler', 'São Bernardo', 'Saluki', 'Samoieda', 'Schipperke', 'Scottish Deerhound', 'Terrier Escocês', 'Sealyham Terrier', 'Pastor de Shetland', 'Shih Tzu', 'Husky Siberiano', 'Silky Terrier', 'Skye Terrier', 'Staffordshire Bull Terrier', 'Schnauzer Standard', 'Spaniel Tibetano', 'Terrier Tibetano', 'Vizsla', 'Weimaraner', 'Welsh Terrier', 'West Highland White Terrier', 'Whippet', 'Yorkshire Terrier', 'Outro'];
-const catBreeds = ['Abyssinian', 'American Bobtail', 'American Curl', 'American Shorthair', 'American Wirehair', 'Balinese', 'Bengal', 'Birman', 'Bombay', 'British Shorthair', 'Burmese', 'Chartreux', 'Cornish Rex', 'Devon Rex', 'Egyptian Mau', 'Exotic Shorthair', 'Havana Brown', 'Himalayan', 'Japanese Bobtail', 'Javanese', 'Korat', 'LaPerm', 'Maine Coon', 'Manx', 'Norwegian Forest Cat', 'Ocicat', 'Oriental', 'Persian', 'Ragamuffin', 'Ragdoll', 'Russian Blue', 'Scottish Fold', 'Selkirk Rex', 'Siamese', 'Siberian', 'Singapura', 'Somali', 'Sphynx', 'Tonkinese', 'Turkish Angora', 'Turkish Van', 'Other'];
-const catBreedsPt = ['Abissínio', 'Bobtail Americano', 'American Curl', 'Pelo Curto Americano', 'American Wirehair', 'Balinês', 'Bengala', 'Birmanês', 'Bombaim', 'Pelo Curto Britânico', 'Birmanês', 'Chartreux', 'Cornish Rex', 'Devon Rex', 'Mau Egípcio', 'Exótico de Pelo Curto', 'Havana Brown', 'Himalaia', 'Bobtail Japonês', 'Javanês', 'Korat', 'LaPerm', 'Maine Coon', 'Manx', 'Gato da Floresta Norueguês', 'Ocicat', 'Oriental', 'Persa', 'Ragamuffin', 'Ragdoll', 'Azul Russo', 'Scottish Fold', 'Selkirk Rex', 'Siamês', 'Siberiano', 'Singapura', 'Somali', 'Sphynx', 'Tonkinês', 'Angorá Turco', 'Van Turco', 'Outro'];
+const dogBreeds = ['Affenpinscher', 'Afghan Hound', 'Airedale Terrier', 'Akita', 'Alaskan Malamute', 'American Bulldog', 'American English Coonhound', 'American Eskimo Dog', 'American Foxhound', 'American Hairless Terrier', 'American Leopard Hound', 'American Staffordshire Terrier', 'American Water Spaniel', 'Anatolian Shepherd Dog', 'Appenzeller Sennenhund', 'Australian Cattle Dog', 'Australian Kelpie', 'Australian Shepherd', 'Australian Terrier', 'Azawakh', 'Barbet', 'Basenji', 'Basset Fauve de Bretagne', 'Basset Hound', 'Beagle', 'Bearded Collie', 'Beauceron', 'Bedlington Terrier', 'Belgian Laekenois', 'Belgian Malinois', 'Belgian Sheepdog', 'Belgian Tervuren', 'Bergamasco Sheepdog', 'Berger Picard', 'Bernese Mountain Dog', 'Bichon Frise', 'Biewer Terrier', 'Black and Tan Coonhound', 'Black Russian Terrier', 'Bloodhound', 'Bluetick Coonhound', 'Boerboel', 'Bolognese', 'Border Collie', 'Border Terrier', 'Borzoi', 'Boston Terrier', 'Bouvier des Flandres', 'Boxer', 'Boykin Spaniel', 'Bracco Italiano', 'Briard', 'Brittany', 'Brussels Griffon', 'Bull Terrier', 'Bulldog', 'Bullmastiff', 'Cairn Terrier', 'Canaan Dog', 'Cane Corso', 'Cardigan Welsh Corgi', 'Catahoula Leopard Dog', 'Caucasian Shepherd Dog', 'Cavalier King Charles Spaniel', 'Central Asian Shepherd Dog', 'Cesky Terrier', 'Chesapeake Bay Retriever', 'Chihuahua', 'Chinese Crested', 'Chinese Shar-Pei', 'Chinook', 'Chow Chow', 'Cirneco dell\'Etna', 'Clumber Spaniel', 'Cocker Spaniel', 'Collie', 'Coton de Tulear', 'Curly-Coated Retriever', 'Czechoslovakian Vlcak', 'Dachshund', 'Dalmatian', 'Dandie Dinmont Terrier', 'Doberman Pinscher', 'Dogo Argentino', 'Dogue de Bordeaux', 'Dutch Shepherd', 'English Cocker Spaniel', 'English Foxhound', 'English Setter', 'English Springer Spaniel', 'English Toy Spaniel', 'Entlebucher Mountain Dog', 'Estrela Mountain Dog', 'Eurasier', 'Field Spaniel', 'Finnish Lapphund', 'Finnish Spitz', 'Flat-Coated Retriever', 'Fox Terrier (Smooth)', 'Fox Terrier (Wire)', 'French Bulldog', 'German Pinscher', 'German Shepherd', 'German Shorthaired Pointer', 'German Wirehaired Pointer', 'Giant Schnauzer', 'Glen of Imaal Terrier', 'Golden Retriever', 'Gordon Setter', 'Grand Basset Griffon Vendeen', 'Great Dane', 'Great Pyrenees', 'Greater Swiss Mountain Dog', 'Greyhound', 'Harrier', 'Havanese', 'Hovawart', 'Ibizan Hound', 'Icelandic Sheepdog', 'Irish Red and White Setter', 'Irish Setter', 'Irish Terrier', 'Irish Water Spaniel', 'Irish Wolfhound', 'Italian Greyhound', 'Jack Russell Terrier', 'Japanese Chin', 'Japanese Spitz', 'Keeshond', 'Kerry Blue Terrier', 'Komondor', 'Kooikerhondje', 'Kuvasz', 'Labrador Retriever', 'Lagotto Romagnolo', 'Lakeland Terrier', 'Lancashire Heeler', 'Leonberger', 'Lhasa Apso', 'Lowchen', 'Maltese', 'Manchester Terrier', 'Mastiff', 'Miniature American Shepherd', 'Miniature Bull Terrier', 'Miniature Pinscher', 'Miniature Schnauzer', 'Mixed Breed', 'Neapolitan Mastiff', 'Newfoundland', 'Norfolk Terrier', 'Norwegian Buhund', 'Norwegian Elkhound', 'Norwegian Lundehund', 'Norwich Terrier', 'Nova Scotia Duck Tolling Retriever', 'Old English Sheepdog', 'Otterhound', 'Papillon', 'Parson Russell Terrier', 'Pekingese', 'Pembroke Welsh Corgi', 'Petit Basset Griffon Vendeen', 'Pharaoh Hound', 'Plott Hound', 'Pointer', 'Polish Lowland Sheepdog', 'Pomeranian', 'Poodle (Miniature)', 'Poodle (Standard)', 'Poodle (Toy)', 'Portuguese Podengo Pequeno', 'Portuguese Water Dog', 'Pug', 'Puli', 'Pumi', 'Pyrenean Shepherd', 'Rat Terrier', 'Redbone Coonhound', 'Rhodesian Ridgeback', 'Rottweiler', 'Russell Terrier', 'Russian Toy', 'Saint Bernard', 'Saluki', 'Samoyed', 'Schipperke', 'Scottish Deerhound', 'Scottish Terrier', 'Sealyham Terrier', 'Shetland Sheepdog', 'Shiba Inu', 'Shih Tzu', 'Siberian Husky', 'Silky Terrier', 'Skye Terrier', 'Sloughi', 'Smooth Fox Terrier', 'Soft Coated Wheaten Terrier', 'Spanish Water Dog', 'Spinone Italiano', 'Staffordshire Bull Terrier', 'Standard Schnauzer', 'Sussex Spaniel', 'Swedish Vallhund', 'Tibetan Mastiff', 'Tibetan Spaniel', 'Tibetan Terrier', 'Toy Fox Terrier', 'Treeing Walker Coonhound', 'Vizsla', 'Weimaraner', 'Welsh Springer Spaniel', 'Welsh Terrier', 'West Highland White Terrier', 'Whippet', 'Wire Fox Terrier', 'Wirehaired Pointing Griffon', 'Wirehaired Vizsla', 'Xoloitzcuintli', 'Yorkshire Terrier', 'Other'];
+const dogBreedsPt = ['Affenpinscher', 'Airedale Terrier', 'Akita', 'American Staffordshire Terrier', 'Australian Cattle Dog', 'Basenji', 'Basset Hound', 'Beagle', 'Bearded Collie', 'Bedlington Terrier', 'Bernese Mountain Dog', 'Bichon Frisé', 'Bloodhound', 'Boiadeiro Australiano', 'Boiadeiro de Berna', 'Border Collie', 'Border Terrier', 'Borzoi', 'Boston Terrier', 'Boxer', 'Braco Alemão', 'Braco Italiano', 'Briard', 'Brittany', 'Bull Terrier', 'Bulldog Americano', 'Bulldog Francês', 'Bulldog Inglês', 'Bullmastiff', 'Cane Corso', 'Cavalier King Charles Spaniel', 'Chihuahua', 'Chow Chow', 'Cocker Spaniel Americano', 'Cocker Spaniel Inglês', 'Collie', 'Coton de Tulear', 'Cão D\'Água Espanhol', 'Cão D\'Água Irlandês', 'Cão D\'Água Português', 'Cão Esquimó Americano', 'Cão Fila de São Miguel', 'Cão Lobo Checoslovaco', 'Cão Pelado Mexicano', 'Cão de Canaã', 'Cão de Crista Chinês', 'Cão de Guarda de Moscou', 'Cão de Montanha dos Pirenéus', 'Cão de Santo Humberto', 'Dachshund (Teckel)', 'Dálmata', 'Doberman', 'Dogo Argentino', 'Dogue Alemão', 'Dogue de Bordeaux', 'Elkhound Norueguês', 'Fila Brasileiro', 'Flat-Coated Retriever', 'Fox Terrier', 'Foxhound Americano', 'Foxhound Inglês', 'Galgo Afegão', 'Galgo Espanhol', 'Galgo Inglês', 'Galgo Italiano', 'Golden Retriever', 'Grande Boiadeiro Suíço', 'Griffon de Bruxelas', 'Husky Siberiano', 'Jack Russell Terrier', 'Keeshond', 'Kerry Blue Terrier', 'Komondor', 'Kuvasz', 'Labrador Retriever', 'Lakeland Terrier', 'Leonberger', 'Lhasa Apso', 'Lulu da Pomerânia', 'Malamute do Alasca', 'Maltês', 'Mastiff', 'Mastim Espanhol', 'Mastim Napolitano', 'Mastim Tibetano', 'Old English Sheepdog', 'Papillon', 'Pastor Alemão', 'Pastor Australiano', 'Pastor Belga', 'Pastor Bergamasco', 'Pastor Branco Suíço', 'Pastor Holandês', 'Pastor Maremano Abruzês', 'Pastor de Shetland', 'Pastor do Cáucaso', 'Pequinês', 'Perdigueiro Português', 'Pinscher Miniatura', 'Pit Bull', 'Podengo Português', 'Pointer Inglês', 'Poodle', 'Pug', 'Puli', 'Raça Mista (SRD)', 'Rhodesian Ridgeback', 'Rottweiler', 'Saluki', 'Samoieda', 'Schipperke', 'Schnauzer Gigante', 'Schnauzer Miniatura', 'Schnauzer Standard', 'Scottish Terrier', 'Setter Gordon', 'Setter Inglês', 'Setter Irlandês', 'Shar-Pei', 'Shiba Inu', 'Shih Tzu', 'Skye Terrier', 'Soft Coated Wheaten Terrier', 'Spinone Italiano', 'Spitz Alemão', 'Spitz Japonês', 'Staffordshire Bull Terrier', 'São Bernardo', 'Terra Nova', 'Terrier Brasileiro', 'Terrier Escocês', 'Terrier Irlandês', 'Terrier Tibetano', 'Tosa Inu', 'Vizsla', 'Weimaraner', 'Welsh Corgi Cardigan', 'Welsh Corgi Pembroke', 'Welsh Terrier', 'West Highland White Terrier', 'Whippet', 'Xoloitzcuintli', 'Yorkshire Terrier', 'Outro'];
+const catBreeds = ['Abyssinian', 'American Bobtail', 'American Curl', 'American Shorthair', 'American Wirehair', 'Balinese', 'Bengal', 'Birman', 'Bombay', 'British Longhair', 'British Shorthair', 'Burmese', 'Burmilla', 'Chartreux', 'Chausie', 'Cornish Rex', 'Cymric', 'Devon Rex', 'Donskoy', 'Egyptian Mau', 'European Shorthair', 'Exotic Shorthair', 'Havana Brown', 'Himalayan', 'Japanese Bobtail', 'Javanese', 'Khao Manee', 'Korat', 'Kurilian Bobtail', 'LaPerm', 'Lykoi', 'Maine Coon', 'Manx', 'Mixed Breed', 'Munchkin', 'Nebelung', 'Norwegian Forest Cat', 'Ocicat', 'Oriental', 'Persian', 'Peterbald', 'Pixie-bob', 'Ragamuffin', 'Ragdoll', 'Russian Blue', 'Savannah', 'Scottish Fold', 'Selkirk Rex', 'Siamese', 'Siberian', 'Singapura', 'Snowshoe', 'Somali', 'Sphynx', 'Thai', 'Tonkinese', 'Toyger', 'Turkish Angora', 'Turkish Van', 'Other'];
+const catBreedsPt = ['Abissínio', 'American Shorthair', 'Angorá Turco', 'Ashera', 'Azul Russo', 'Balinês', 'Bambino', 'Bengal', 'Bobtail Americano', 'Bobtail Japonês', 'Bombaim', 'British Shorthair', 'Burmês', 'Burmilla', 'Chartreux', 'Cornish Rex', 'Cymric', 'Devon Rex', 'Donskoy', 'Egyptian Mau', 'Exótico', 'Gato Floresta Norueguesa', 'Gato de Pelo Curto Americano', 'Gato de Pelo Curto Brasileiro', 'Gato de Pelo Curto Europeu', 'Gato de Pelo Curto Inglês', 'Gato do Egeu', 'Havana Brown', 'Himalaia', 'Javanês', 'Khao Manee', 'Korat', 'Kurilian Bobtail', 'LaPerm', 'Lykoi', 'Maine Coon', 'Manx', 'Mau Egípcio', 'Munchkin', 'Nebelung', 'Ocicat', 'Oriental', 'Persa', 'Peterbald', 'Pixie-bob', 'Raça Mista (SRD)', 'Ragamuffin', 'Ragdoll', 'Sagrado da Birmânia', 'Savannah', 'Scottish Fold', 'Selkirk Rex', 'Siamês', 'Siberiano', 'Singapura', 'Snowshoe', 'Somali', 'Sphynx', 'Thai', 'Tonquinês', 'Toyger', 'Van Turco', 'Outro'];
 
 const InputField: React.FC<{ label: string; name: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; type?: string; }> = ({ label, name, value, onChange, type = 'text' }) => (
     <div>
@@ -186,56 +186,61 @@ export const PetFormScreen: React.FC = () => {
                     <input type="file" accept="image/*" ref={photoInputRef} onChange={handlePhotoChange} className="hidden" />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputField label={translations.name} name="name" value={formData.name} onChange={handleChange} />
-                    <InputField label={translations.microchip} name="microchip" value={formData.microchip} onChange={handleChange} />
-                    <SelectField label={translations.species} name="species" value={formData.species} onChange={handleChange} options={Object.values(Species)} translations={translations} />
+                <div className="bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-sm p-6 rounded-xl shadow-sm">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+                        {translations.basicInfo || 'Informações Básicas'}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <InputField label={translations.name} name="name" value={formData.name} onChange={handleChange} />
+                        <InputField label={translations.microchip} name="microchip" value={formData.microchip} onChange={handleChange} />
+                        <SelectField label={translations.species} name="species" value={formData.species} onChange={handleChange} options={Object.values(Species)} translations={translations} />
 
-                    {formData.species === Species.Exotic
-                        ? <InputField label={translations.breed} name="breed" value={formData.breed} onChange={handleChange} />
-                        : (
-                            <div>
-                                <SelectField
-                                    label={translations.breed}
-                                    name="breed"
-                                    value={formData.breed}
-                                    onChange={handleChange}
-                                    options={formData.species === Species.Canine ? currentDogBreeds : currentCatBreeds}
-                                    translations={translations}
-                                />
-                                {formData.breed === otherOption && (
-                                    <div className="mt-2">
-                                        <input
-                                            type="text"
-                                            name="customBreed"
-                                            value={customBreed}
-                                            onChange={(e) => setCustomBreed(e.target.value)}
-                                            placeholder={translations.specifyBreedPlaceholder}
-                                            className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                                            required
-                                        />
-                                    </div>
-                                )}
+                        {formData.species === Species.Exotic
+                            ? <InputField label={translations.breed} name="breed" value={formData.breed} onChange={handleChange} />
+                            : (
+                                <div>
+                                    <SelectField
+                                        label={translations.breed}
+                                        name="breed"
+                                        value={formData.breed}
+                                        onChange={handleChange}
+                                        options={formData.species === Species.Canine ? currentDogBreeds : currentCatBreeds}
+                                        translations={translations}
+                                    />
+                                    {formData.breed === otherOption && (
+                                        <div className="mt-2">
+                                            <input
+                                                type="text"
+                                                name="customBreed"
+                                                value={customBreed}
+                                                onChange={(e) => setCustomBreed(e.target.value)}
+                                                placeholder={translations.specifyBreedPlaceholder}
+                                                className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                                                required
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        }
+
+                        <SelectField label={translations.gender} name="gender" value={formData.gender} onChange={handleChange} options={Object.values(Gender)} translations={translations} />
+                        <InputField label={translations.color} name="color" value={formData.color} onChange={handleChange} />
+
+                        <InputField label={translations.birthDate} name="birthDate" value={formData.birthDate || ''} onChange={handleChange} type="date" />
+                        <div>
+                            <label className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark">{translations.age}</label>
+                            <div className="mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm text-text-secondary-light dark:text-text-secondary-dark min-h-[38px] flex items-center">
+                                {age || '-'}
                             </div>
-                        )
-                    }
-
-                    <SelectField label={translations.gender} name="gender" value={formData.gender} onChange={handleChange} options={Object.values(Gender)} translations={translations} />
-                    <InputField label={translations.color} name="color" value={formData.color} onChange={handleChange} />
-
-                    <InputField label={translations.birthDate} name="birthDate" value={formData.birthDate || ''} onChange={handleChange} type="date" />
-                    <div>
-                        <label className="block text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark">{translations.age}</label>
-                        <div className="mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm sm:text-sm text-text-secondary-light dark:text-text-secondary-dark min-h-[38px] flex items-center">
-                            {age || '-'}
                         </div>
-                    </div>
 
-                    <SelectField label={translations.behaviorWithAnimals} name="behaviorWithAnimals" value={formData.behaviorWithAnimals} onChange={handleChange} options={Object.values(Behavior)} translations={translations} />
-                    <SelectField label={translations.behaviorWithPeople} name="behaviorWithPeople" value={formData.behaviorWithPeople} onChange={handleChange} options={Object.values(Behavior)} translations={translations} />
-                    <div className="flex items-center justify-start mt-2 md:mt-8">
-                        <input type="checkbox" id="isSterilized" name="isSterilized" checked={formData.isSterilized} onChange={handleChange} className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" />
-                        <label htmlFor="isSterilized" className="ml-2 block text-sm text-text-light dark:text-text-dark">{translations.sterilized}</label>
+                        <SelectField label={translations.behaviorWithAnimals} name="behaviorWithAnimals" value={formData.behaviorWithAnimals} onChange={handleChange} options={Object.values(Behavior)} translations={translations} />
+                        <SelectField label={translations.behaviorWithPeople} name="behaviorWithPeople" value={formData.behaviorWithPeople} onChange={handleChange} options={Object.values(Behavior)} translations={translations} />
+                        <div className="flex items-center justify-start mt-2 md:mt-8">
+                            <input type="checkbox" id="isSterilized" name="isSterilized" checked={formData.isSterilized} onChange={handleChange} className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" />
+                            <label htmlFor="isSterilized" className="ml-2 block text-sm text-text-light dark:text-text-dark">{translations.sterilized}</label>
+                        </div>
                     </div>
                 </div>
 

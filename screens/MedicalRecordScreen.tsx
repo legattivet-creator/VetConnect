@@ -8,6 +8,9 @@ import { PencilIcon, TrashIcon, Bars3Icon, ShareIcon, MagnifyingGlassPlusIcon, M
 import { compressImage } from '../utils';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { FileOpener } from '@capacitor-community/file-opener';
+
 
 const FileItem: React.FC<{
     file: MedicalFile,
@@ -25,12 +28,12 @@ const FileItem: React.FC<{
 
     const getFileParts = (filename: string) => {
         const lastDotIndex = filename.lastIndexOf('.');
-        if (lastDotIndex === -1 || lastDotIndex === 0) { // No extension or hidden file
+        if (lastDotIndex === -1 || lastDotIndex === 0) {
             return { baseName: filename, extension: '' };
         }
         return {
             baseName: filename.substring(0, lastDotIndex),
-            extension: filename.substring(lastDotIndex), // includes the dot
+            extension: filename.substring(lastDotIndex),
         };
     };
 
@@ -42,46 +45,140 @@ const FileItem: React.FC<{
             const { baseName } = getFileParts(file.name);
             setEditedBaseName(baseName);
             inputRef.current?.focus();
-            // Select text after a short delay for focus to take effect
             setTimeout(() => inputRef.current?.select(), 0);
         }
     }, [isEditing, file.name]);
 
-    const handleOpenFile = () => {
-        onView(file);
+    const handleOpenFile = async () => {
+        // 1. Se for uma imagem, o comportamento não muda: usa o visualizador interno.
+        if (file.type === 'image') {
+            onView(file);
+            return;
+        }
+
+        // --- LÓGICA DEFINITIVA PARA DOCUMENTOS ---
+
+        // 2. Se for um DOCUMENTO no CELULAR (Android/iOS)
+        if (Capacitor.isNativePlatform() && file.url.startsWith('data:')) {
+            try {
+                const base64 = file.url.split(',')[1];
+                const fileName = file.name;
+
+                // Salva o arquivo no cache para ter um caminho físico
+                await Filesystem.writeFile({
+                    path: fileName,
+                    data: base64,
+                    directory: Directory.Cache
+                });
+
+                // Pega o caminho nativo do arquivo
+                const fileUri = await Filesystem.getUri({
+                    path: fileName,
+                    directory: Directory.Cache
+                });
+
+                // USA A FERRAMENTA CERTA: FileOpener, FORÇANDO O TIPO PDF
+                // TODO: Descomentar após instalar @capawesome/capacitor-file-opener
+                /* await FileOpener.openFile({
+                    path: fileUri.uri,
+                    mimeType: 'application/pdf', 
+                }); */
+
+                // Open PDF nativamente usando FileOpener
+                await FileOpener.open({
+                    filePath: fileUri.uri,
+                    contentType: 'application/pdf'
+                });
+
+            } catch (error: any) {
+                console.error('Error opening file on native:', error);
+                if (!String(error.message || error).includes('canceled')) {
+                    alert('Não foi possível abrir o arquivo. Verifique se você tem um leitor de PDF instalado.');
+                }
+            }
+        }
+        // 3. Se for um DOCUMENTO na WEB
+        else if (!Capacitor.isNativePlatform()) {
+            try {
+                const fetchRes = await fetch(file.url);
+                const blob = await fetchRes.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                window.open(blobUrl, '_blank');
+            } catch (e) {
+                console.error("Error creating blob url, falling back to direct open", e);
+                window.open(file.url, '_blank');
+            }
+        }
+        // 4. Fallback para outros casos
+        else {
+            await Browser.open({ url: file.url });
+        }
     };
 
     const handleShare = async () => {
         try {
-            // Mobile share using Capacitor
-            if (file.url.startsWith('data:')) {
-                // For base64, we might need to write to a temp file first for some platforms, 
-                // but let's try sharing directly if possible or warn.
-                // Actually, Capacitor Share supports files directly if they are on filesystem, 
-                // but for base64 data URLs, we often need to write them to the cache directory first using Filesystem.
-                // For simplicity in this step, let's try the basic text/title share or just the link if it's external.
-                // But since these are likely local base64 images:
+            if (file.url.startsWith('data:') && Capacitor.isNativePlatform()) {
+                const base64 = file.url.split(',')[1];
+                const fileName = file.name;
 
-                // Simpler approach for now: Share the text/title, or if it's an image, we can try sharing the file.
-                // A robust implementation requires writing the blob to the filesystem. 
-                // Given the constraints, let's assume we can share the text or the file functionality needs the FileSystem plugin.
-                // However, the user specifically asked to FIX the "Share API not supported" error.
+                await Filesystem.writeFile({
+                    path: fileName,
+                    data: base64,
+                    directory: Directory.Cache
+                });
+
+                const fileUri = await Filesystem.getUri({
+                    path: fileName,
+                    directory: Directory.Cache
+                });
 
                 await Share.share({
                     title: `${translations.medicalRecord} - ${petName}`,
                     text: `Arquivo: ${file.name}`,
-                    // url: file.url // Sharing data urls directly might fail on some Android versions without Filesystem. 
-                    // Let's stick to text sharing if we can't write file, OR just try sharing the text for now to prevent the crash.
+                    files: [fileUri.uri]
                 });
             } else {
-                await Share.share({
-                    title: `${translations.medicalRecord} - ${petName}`,
-                    text: `Arquivo: ${file.name}`,
-                    url: file.url,
-                });
+                if (file.url.startsWith('data:')) {
+                    try {
+                        const fetchRes = await fetch(file.url);
+                        const blob = await fetchRes.blob();
+                        const fileObj = new File([blob], file.name, { type: blob.type });
+
+                        if (navigator.canShare && navigator.canShare({ files: [fileObj] })) {
+                            await navigator.share({
+                                files: [fileObj],
+                                title: `${translations.medicalRecord} - ${petName}`,
+                                text: `Arquivo: ${file.name}`
+                            });
+                        } else {
+                            throw new Error("Web Share files not supported");
+                        }
+                    } catch (webShareErr) {
+                        console.warn("Web Share failed, falling back to download link", webShareErr);
+                        const link = document.createElement('a');
+                        link.href = file.url;
+                        link.download = file.name;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
+                } else {
+                    await Share.share({
+                        title: `${translations.medicalRecord} - ${petName}`,
+                        text: `Arquivo: ${file.name}`,
+                        url: file.url,
+                    });
+                }
             }
         } catch (error) {
             console.error('Error sharing:', error);
+            alert("Não foi possível compartilhar. Tentando baixar...");
+            const link = document.createElement('a');
+            link.href = file.url;
+            link.download = file.name;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     };
 
@@ -95,18 +192,15 @@ const FileItem: React.FC<{
 
     const saveRename = () => {
         const newBaseName = editedBaseName.trim();
-        if (!newBaseName) { // Prevent empty file names, revert
+        if (!newBaseName) {
             setEditedBaseName(initialBaseName);
             setIsEditing(false);
             return;
         }
-
         const newName = `${newBaseName}${initialExtension}`;
-
         if (newName !== file.name) {
             onRename(file.id, newName);
         }
-
         setIsEditing(false);
     };
 
@@ -150,7 +244,7 @@ const FileItem: React.FC<{
 
                 <div className="flex items-center space-x-2 flex-shrink-0">
                     <button onClick={handleOpenFile} className="p-2 bg-blue-50 dark:bg-blue-900/30 text-primary rounded-lg">
-                        <span className="text-xs font-bold">Ver</span>
+                        <span className="text-xs font-bold">Abrir</span>
                     </button>
                     <button onClick={handleShare} className="p-2 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg">
                         <ShareIcon className="w-4 h-4" />
@@ -201,6 +295,9 @@ const FileItem: React.FC<{
     );
 };
 
+// ... O RESTO DO ARQUIVO CONTINUA IGUAL, SEM ALTERAÇÕES ...
+// (RecordCategory, WeightHistoryCategory, ImageViewer, MedicalRecordScreen)
+
 const RecordCategory: React.FC<{
     category: MedicalRecordCategory;
     petId: string;
@@ -213,27 +310,19 @@ const RecordCategory: React.FC<{
     const { translations, addMedicalFile, renameMedicalFile, updateMedicalFileNote, getPet, background } = useAppContext();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const photoInputRef = useRef<HTMLInputElement>(null);
-    // Video input ref removed
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, explicitType?: 'image' | 'video' | 'audio') => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-
             let fileType: 'document' | 'image' | 'video' | 'audio';
-
             if (explicitType) {
                 fileType = explicitType;
             } else {
                 const mime = file.type;
-                if (mime.startsWith('image/')) {
-                    fileType = 'image';
-                } else if (mime.startsWith('video/')) {
-                    fileType = 'video';
-                } else if (mime.startsWith('audio/')) {
-                    fileType = 'audio';
-                } else {
-                    fileType = 'document';
-                }
+                if (mime.startsWith('image/')) fileType = 'image';
+                else if (mime.startsWith('video/')) fileType = 'video';
+                else if (mime.startsWith('audio/')) fileType = 'audio';
+                else fileType = 'document';
             }
 
             const reader = new FileReader();
@@ -246,7 +335,6 @@ const RecordCategory: React.FC<{
                         console.error("Compression failed", e);
                     }
                 }
-
                 addMedicalFile(petId, category.title, {
                     name: file.name,
                     url: finalUrl,
@@ -255,7 +343,7 @@ const RecordCategory: React.FC<{
                 });
             };
             reader.readAsDataURL(file);
-            e.target.value = ''; // Reset input
+            e.target.value = '';
         }
     };
 
@@ -302,13 +390,10 @@ const RecordCategory: React.FC<{
                     ) : (
                         <p className="text-sm text-center text-text-secondary-light dark:text-text-secondary-dark">No files in this category.</p>
                     )}
-
                     <div className="pt-2 flex flex-wrap justify-end gap-2">
                         <button onClick={() => fileInputRef.current?.click()} className="px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20">{translations.attachFile}</button>
                         <button onClick={() => photoInputRef.current?.click()} className="px-3 py-1 text-sm font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20">{translations.capturePhoto}</button>
-                        {/* Video button removed */}
                     </div>
-
                     <input type="file" ref={fileInputRef} onChange={(e) => handleFileChange(e)} className="hidden" />
                     <input type="file" accept="image/*" capture ref={photoInputRef} onChange={(e) => handleFileChange(e, 'image')} className="hidden" />
                 </div>
@@ -317,14 +402,12 @@ const RecordCategory: React.FC<{
     );
 };
 
-
 const WeightHistoryCategory: React.FC<{
     petId: string;
     weightHistory: WeightEntry[];
     onDeleteRequest: (entry: WeightEntry) => void;
 }> = ({ petId, weightHistory, onDeleteRequest }) => {
     const { translations, addWeightEntry, updateWeightEntry, language, background } = useAppContext();
-
     const [isOpen, setIsOpen] = useState(false);
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [weight, setWeight] = useState('');
@@ -352,9 +435,7 @@ const WeightHistoryCategory: React.FC<{
     };
 
     const handleWeightKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            handleAdd(e);
-        }
+        if (e.key === 'Enter') handleAdd(e);
     };
 
     const handleStartEdit = (entry: WeightEntry) => {
@@ -398,7 +479,6 @@ const WeightHistoryCategory: React.FC<{
             {isOpen && (
                 <div className={`p-4 ${background ? 'bg-gray-50/70 dark:bg-gray-800/70 backdrop-blur-sm' : 'bg-gray-50 dark:bg-gray-800'}`}>
                     <div className="p-4 rounded-lg bg-surface-light dark:bg-surface-dark space-y-4">
-                        {/* Add form */}
                         <form onSubmit={handleAdd} className={`grid grid-cols-1 sm:grid-cols-4 gap-3 items-end p-3 rounded-lg ${background ? 'bg-gray-100/80 dark:bg-gray-900/80' : 'bg-gray-100 dark:bg-gray-900/50'}`}>
                             <div className="sm:col-span-1">
                                 <label className="text-xs font-medium text-text-secondary-light dark:text-text-secondary-dark">{translations.date}</label>
@@ -418,8 +498,6 @@ const WeightHistoryCategory: React.FC<{
                             </div>
                             <button type="submit" className="w-full sm:w-auto bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-4 rounded-lg text-sm transition">{translations.addEntry}</button>
                         </form>
-
-                        {/* Table */}
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left text-text-light dark:text-white">
                                 <thead className={`${background ? 'bg-gray-100/70 dark:bg-gray-700/70' : 'bg-gray-100 dark:bg-gray-700'}`}>
@@ -437,7 +515,6 @@ const WeightHistoryCategory: React.FC<{
                                 <tbody>
                                     {sortedHistory.map(entry => (
                                         editingEntryId === entry.id && editingValues ? (
-                                            // Edit row
                                             <tr key={entry.id} className="bg-blue-50 dark:bg-blue-900/20">
                                                 <td className="p-2"><input type="date" value={editingValues.date} onChange={e => handleEditingChange('date', e.target.value)} className="w-full bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-md px-1 py-0.5" /></td>
                                                 <td className="p-2 flex items-center gap-1">
@@ -456,7 +533,6 @@ const WeightHistoryCategory: React.FC<{
                                                 </td>
                                             </tr>
                                         ) : (
-                                            // View row
                                             <tr key={entry.id} className={`border-b ${background ? 'border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-50/50 dark:hover:bg-gray-800/50' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}>
                                                 <td className="p-2">{new Date(entry.date).toLocaleDateString(language === 'pt' ? 'pt-BR' : 'en-GB')}</td>
                                                 <td className="p-2">{entry.weight} {entry.unit}</td>
@@ -523,19 +599,32 @@ const ImageViewer: React.FC<{ file: MedicalFile, onClose: () => void }> = ({ fil
                     </div>
                 ) : (
                     <div className="w-full h-full max-w-4xl bg-white flex flex-col items-center justify-center p-2 rounded-lg relative">
-                        {/* PDF/Document Viewer */}
                         {file.type === 'document' || file.mimeType?.includes('pdf') ? (
-                            <div className="w-full h-full flex flex-col items-center justify-center">
+                            <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-white rounded-lg text-center space-y-4">
+                                <p className="text-lg font-medium text-gray-700">Arquivo PDF</p>
                                 {Capacitor.isNativePlatform() ? (
-                                    <div className="text-center p-6 bg-white rounded-lg">
-                                        <p className="mb-4 text-lg font-medium text-gray-700">Visualização de PDF externa</p>
+                                    <>
                                         <button
-                                            onClick={() => Browser.open({ url: file.url })}
-                                            className="bg-primary text-white px-6 py-3 rounded-lg font-bold hover:bg-primary-dark transition shadow-lg"
+                                            onClick={async () => {
+                                                if (file.url.startsWith('data:')) {
+                                                    try {
+                                                        const base64 = file.url.split(',')[1];
+                                                        const fileName = file.name;
+                                                        await Filesystem.writeFile({ path: fileName, data: base64, directory: Directory.Cache });
+                                                        const fileUri = await Filesystem.getUri({ path: fileName, directory: Directory.Cache });
+                                                        await Share.share({ title: fileName, files: [fileUri.uri] });
+                                                    } catch (e) {
+                                                        console.error("Error opening PDF via Share", e);
+                                                        alert("Erro ao abrir arquivo. Tente baixar.");
+                                                    }
+                                                } else {
+                                                }
+                                            }}
+                                            className="bg-secondary text-white px-6 py-3 rounded-lg font-bold hover:bg-secondary-dark transition shadow-md w-full max-w-xs"
                                         >
-                                            Abrir PDF (Adobe/Navegador)
+                                            Ver (Abrir no App)
                                         </button>
-                                    </div>
+                                    </>
                                 ) : (
                                     <iframe
                                         src={file.url}
@@ -543,32 +632,44 @@ const ImageViewer: React.FC<{ file: MedicalFile, onClose: () => void }> = ({ fil
                                         title={file.name}
                                     />
                                 )}
-
-                                <div className="mt-4 text-center">
-                                    <button
-                                        onClick={() => Capacitor.isNativePlatform() ? Browser.open({ url: file.url }) : window.open(file.url, '_blank')}
-                                        className="text-white hover:text-gray-300 hover:underline text-sm font-medium bg-black/50 px-3 py-1 rounded"
-                                    >
-                                        {Capacitor.isNativePlatform() ? "Toque aqui se não abrir automaticamente" : "Se não abrir, clique aqui para baixar"}
-                                    </button>
-                                </div>
                             </div>
                         ) : (
                             <div className="text-center text-gray-800">
                                 <p className="mb-4 text-xl">Visualização não disponível para este tipo de arquivo.</p>
-                                <a
-                                    href={file.url}
-                                    download={file.name}
+                                <button
+                                    onClick={async () => {
+                                        if (Capacitor.isNativePlatform() && file.url.startsWith('data:')) {
+                                            try {
+                                                const base64 = file.url.split(',')[1];
+                                                await Filesystem.writeFile({
+                                                    path: file.name,
+                                                    data: base64,
+                                                    directory: Directory.Documents
+                                                });
+                                                alert("Arquivo salvo em Documentos!");
+                                            } catch (e) {
+                                                console.error("Save failed", e);
+                                                alert("Erro ao salvar arquivo.");
+                                            }
+                                        } else {
+                                            const link = document.createElement('a');
+                                            link.href = file.url;
+                                            link.download = file.name;
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            document.body.removeChild(link);
+                                        }
+                                    }}
                                     className="bg-primary text-white px-6 py-3 rounded-lg font-bold hover:bg-primary-dark transition"
                                 >
                                     Baixar Arquivo
-                                </a>
+                                </button>
                             </div>
                         )}
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 };
 

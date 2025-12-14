@@ -1,0 +1,52 @@
+/* CSS Global - Tailwind carregado via CDN */
+
+:root {
+    --background-light: #f5f5f5;
+    --background-dark: #1a1a1a;
+    --text-light: #171717;
+    --text-dark: #e5e5e5;
+}
+
+body {
+    background-color: var(--background-light);
+    color: var(--text-light);
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    
+    /* Enforce touch actions to allow zooming (pinch) but prevent double-tap delay */
+    touch-action: manipulation;
+    /* Ensure no overflow restrictions prevent zooming */
+    min-height: 100vh;
+}
+
+/* Ensure zoom works on mobile */
+html {
+    touch-action: manipulation;
+}
+
+.dark body {
+    background-color: var(--background-dark);
+    color: var(--text-dark);
+}
+
+/* Scrollbar customizada */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

@@ -15,7 +15,8 @@ import type {
   MedicalFile,
   MedicalRecordCategory,
   WeightEntry,
-  OwnerInfo
+  OwnerInfo,
+  AudioLanguage
 } from '../types';
 import { AppointmentStatus } from '../types';
 import { HomeScreen } from '../screens/HomeScreen';
@@ -26,6 +27,7 @@ import { ScheduleScreen } from '../screens/ScheduleScreen';
 import { AppointmentFormScreen } from '../screens/AppointmentFormScreen';
 import { MedicalRecordScreen } from '../screens/MedicalRecordScreen';
 import { PetOwnerScreen } from '../screens/PetOwnerScreen';
+import { ImportAnimalScreen } from '../screens/ImportAnimalScreen';
 import { MOCK_PETS, MOCK_APPOINTMENTS, MOCK_RECORDS, generateCategories } from '../mockData';
 import { MoonIcon, SunIcon, LanguagesIcon } from '../components/Icons';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -88,6 +90,8 @@ interface AppContextType {
   setProfessionalLogo: (logo: string | null) => void;
   userProfile: OwnerInfo | null;
   setUserProfile: (profile: OwnerInfo) => void;
+  notificationAudioLanguage: AudioLanguage;
+  setNotificationAudioLanguage: (lang: AudioLanguage) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -543,6 +547,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return localStorage.getItem('professionalLogo') || null;
   });
 
+  const [notificationAudioLanguage, setNotificationAudioLanguage] = useState<AudioLanguage>(() => {
+    return (localStorage.getItem('notificationAudioLanguage') as AudioLanguage) || 'PT_PT';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('notificationAudioLanguage', notificationAudioLanguage);
+  }, [notificationAudioLanguage]);
+
   const [userProfile, setUserProfile] = useState<OwnerInfo | null>(() => {
     const saved = localStorage.getItem('userProfile');
     return saved ? JSON.parse(saved) : null;
@@ -558,7 +570,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [pets, setPets] = useState<Pet[]>(() => {
     const savedPets = localStorage.getItem('pets');
-    return savedPets ? JSON.parse(savedPets) : MOCK_PETS;
+    return savedPets ? JSON.parse(savedPets) : [];
   });
 
   const [appointments, setAppointments] = useState<Appointment[]>(() => {
@@ -569,7 +581,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return value;
       });
     }
-    return MOCK_APPOINTMENTS;
+    return [];
   });
 
   const [records, setRecords] = useState<MedicalRecord[]>(() => {
@@ -581,7 +593,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
     }
     // ensure vetHistory exists in records
-    return MOCK_RECORDS.map(r => ({ ...r, vetHistory: r.vetHistory || [] }));
+    return [];
   });
 
   const [background, setBackground] = useState<string | null>(() => localStorage.getItem('background'));
@@ -813,10 +825,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const lastSpokenAlertId = useRef<string | null>(null);
 
   // Helper to translate appointment types (needed for voice alert text)
-  const getTranslatedType = (type: string) => {
+  const getTranslatedType = (type: string, langIdx?: Language) => {
     const key = type.toLowerCase().replace(/[^a-z0-9]/gi, '');
-    const translations = translationData[language] || translationData.en;
-    return translations[key] || type;
+    const useLang = langIdx || language;
+    const trans = translationData[useLang] || translationData.en;
+    return trans[key] || type;
   };
 
   // 1. Time Checker: Identifies appointments that need alerting
@@ -973,10 +986,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const appt = appointments.find(a => a.id === apptId);
     if (!appt) return;
 
-    const translatedType = getTranslatedType(appt.type);
-    const translations = translationData[language] || translationData.en;
+    // Determine which language dictionary to use for the SPOKEN TEXT
+    const audioLangCode: Language = notificationAudioLanguage === 'EN' ? 'en' : 'pt';
+    const audioTranslations = translationData[audioLangCode];
 
-    const text = (type === '24h' ? translations.voiceAlertDay : translations.voiceAlertHour)
+    const translatedType = getTranslatedType(appt.type, audioLangCode);
+
+    // Use audioTranslations for constructing the sentence
+    const text = (type === '24h' ? audioTranslations.voiceAlertDay : audioTranslations.voiceAlertHour)
       .replace('{pet}', appt.petName)
       .replace('{type}', translatedType);
 
@@ -992,7 +1009,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           await TextToSpeech.stop(); // Stop potential previous
           await TextToSpeech.speak({
             text: text,
-            lang: language === 'pt' ? 'pt-BR' : 'en-US',
+            lang: notificationAudioLanguage === 'PT_PT' ? 'pt-PT' : (notificationAudioLanguage === 'PT_BR' ? 'pt-BR' : 'en-US'),
             rate: 1.0,
             pitch: 1.0,
             category: 'ambient',
@@ -1012,7 +1029,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           window.speechSynthesis.cancel();
 
           const utterance = new SpeechSynthesisUtterance(text);
-          const targetLang = language === 'pt' ? 'pt-BR' : 'en-US';
+          const targetLang = notificationAudioLanguage === 'PT_PT' ? 'pt-PT' : (notificationAudioLanguage === 'PT_BR' ? 'pt-BR' : 'en-US');
           utterance.lang = targetLang;
           utterance.rate = 1;
 
@@ -1059,7 +1076,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // "If the alert CHANGED, the next effect run will cancel it"
       }
     };
-  }, [activeAlertIds, dismissedNotificationIds, appointments, language]);
+  }, [activeAlertIds, dismissedNotificationIds, appointments, language, notificationAudioLanguage]);
 
   // Context value
   const value: AppContextType = {
@@ -1079,7 +1096,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     activeAlertIds,
     professionalLogo, setProfessionalLogo,
-    userProfile, setUserProfile
+    userProfile, setUserProfile,
+    notificationAudioLanguage, setNotificationAudioLanguage
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
@@ -1188,6 +1206,20 @@ const SettingsModal: React.FC = () => {
               </div>
             </div>
           </div>
+
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button
+              onClick={() => {
+                if (window.confirm(translations.language === 'pt' ? 'Tem certeza? Isso apagará TODOS os dados do app.' : 'Are you sure? This will wipe ALL app data.')) {
+                  localStorage.clear();
+                  window.location.reload();
+                }
+              }}
+              className="w-full text-red-500 hover:text-red-700 text-sm font-bold py-2 border border-red-200 dark:border-red-900 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            >
+              {translations.language === 'pt' ? 'Limpar Todos os Dados (Reset)' : 'Reset All Data'}
+            </button>
+          </div>
         </div>
         <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end">
           <button onClick={closeSettings} className="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-6 rounded-lg transition-transform transform hover:scale-105">
@@ -1221,6 +1253,7 @@ export const App: React.FC = () => {
           <Route path="/pet/:petId" element={<PetDetailScreen />} />
           <Route path="/pet/:petId/owner" element={<PetOwnerScreen />} />
           <Route path="/tutor" element={<PetOwnerScreen />} />
+          <Route path="/import-animal" element={<ImportAnimalScreen />} />
           <Route path="/schedule" element={<ScheduleScreen />} />
           <Route path="/appointment/new/:petId" element={<AppointmentFormScreen />} />
           <Route path="/appointment/edit/:appointmentId" element={<AppointmentFormScreen />} />

@@ -450,18 +450,18 @@ export const ScheduleScreen: React.FC = () => {
                 <div className="flex-grow flex space-x-1">
                     <button
                         onClick={() => setView('upcoming')}
-                        className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors w-full ${view === 'upcoming' ? 'bg-primary text-white' : `hover:bg-gray-200 dark:hover:bg-gray-700 ${background ? 'text-text-light dark:text-text-dark' : ''}`}`}
+                        className={`px-2 py-2 text-xs md:text-sm md:px-4 font-semibold rounded-md transition-colors w-full ${view === 'upcoming' ? 'bg-primary text-white' : `hover:bg-gray-200 dark:hover:bg-gray-700 ${background ? 'text-text-light dark:text-text-dark' : ''}`}`}
                     >
                         {translations.upcoming}
                     </button>
                     <button
                         onClick={() => setView('history')}
-                        className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors w-full ${view === 'history' ? 'bg-primary text-white' : `hover:bg-gray-200 dark:hover:bg-gray-700 ${background ? 'text-text-light dark:text-text-dark' : ''}`}`}
+                        className={`px-2 py-2 text-xs md:text-sm md:px-4 font-semibold rounded-md transition-colors w-full ${view === 'history' ? 'bg-primary text-white' : `hover:bg-gray-200 dark:hover:bg-gray-700 ${background ? 'text-text-light dark:text-text-dark' : ''}`}`}
                     >
                         {translations.history}
                     </button>
                 </div>
-                <button onClick={handleToggleSelectionMode} className="ml-2 px-3 py-2 text-sm font-semibold text-primary dark:text-primary-light rounded-md hover:bg-primary/10 transition-colors">
+                <button onClick={handleToggleSelectionMode} className="ml-1 px-2 py-2 text-xs md:text-sm md:px-3 font-semibold text-primary dark:text-primary-light rounded-md hover:bg-primary/10 transition-colors whitespace-nowrap">
                     {isSelectionMode ? `${translations.cancelSelection} (${selectedAppointmentIds.length})` : translations.select}
                 </button>
             </div>

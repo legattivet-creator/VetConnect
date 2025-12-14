@@ -197,12 +197,12 @@ export const PetListScreen: React.FC = () => {
                     />
                 </div>
 
-                <div className={`p-2 rounded-lg shadow-sm flex space-x-1 justify-center ${background ? 'bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-sm' : 'bg-surface-light dark:bg-surface-dark'}`}>
+                <div className={`p-2 rounded-lg shadow-sm grid grid-cols-4 gap-1 ${background ? 'bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-sm' : 'bg-surface-light dark:bg-surface-dark'}`}>
                     {(['All', ...Object.values(Species)] as const).map(f => (
                         <button
                             key={f}
                             onClick={() => setFilter(f)}
-                            className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors w-full ${filter === f ? 'bg-primary text-white' : `hover:bg-gray-200 dark:hover:bg-gray-700 ${background ? 'text-text-light dark:text-text-dark' : ''}`}`}
+                            className={`px-1 py-2 text-xs md:text-sm font-semibold rounded-md transition-colors w-full ${filter === f ? 'bg-primary text-white' : `hover:bg-gray-200 dark:hover:bg-gray-700 ${background ? 'text-text-light dark:text-text-dark' : ''}`}`}
                         >
                             {translations[f.toLowerCase() as keyof typeof translations]}
                         </button>
@@ -210,7 +210,23 @@ export const PetListScreen: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
-                    {filteredPets.length > 0 ? (
+                    {pets.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                            <div className="bg-surface-light/90 dark:bg-surface-dark/90 backdrop-blur-sm p-8 rounded-xl shadow-lg max-w-sm mx-auto">
+                                <div className="bg-primary/10 dark:bg-primary/20 p-6 rounded-full mb-6 mx-auto w-28 h-28 flex items-center justify-center">
+                                    <PlusIcon className="w-16 h-16 text-primary" />
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                                    {language === 'pt' ? 'Comece por aqui!' : 'Start here!'}
+                                </h3>
+                                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                                    {language === 'pt'
+                                        ? 'Sua lista está vazia. Vá ao menu lateral (botão superior esquerdo) e selecione "Adicionar Pet" para cadastrar seu primeiro animal.'
+                                        : 'Your list is empty. Go to the side menu (top left button) and select "Add Pet" to register your first animal.'}
+                                </p>
+                            </div>
+                        </div>
+                    ) : filteredPets.length > 0 ? (
                         filteredPets.map(pet => (
                             <PetCard
                                 key={pet.id}

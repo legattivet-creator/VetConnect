@@ -34,14 +34,18 @@ export const Layout: React.FC<{
     const canGoBack = (backPath || location.state?.from) && showBackButton;
 
     // Background Logic
-    let computedBgImage: string | null = null;
-    if (normalizedPath === '/pets') {
-        computedBgImage = background || '/default-bg.jpg';
-    } else if (params.petId) {
+    // Background Logic
+    let computedBgImage: string | null = background || '/default-bg.jpg';
+
+    // Only override if we are on a pet-specific page AND the pet has a photo
+    if (params.petId && !['/pets', '/home', '/schedule', '/tutor', '/import-animal'].includes(normalizedPath)) {
         const currentPet = getPet(params.petId);
         if (currentPet?.photoUrl) {
             computedBgImage = currentPet.photoUrl;
         }
+    } else if (['/pets', '/home', '/schedule', '/tutor', '/import-animal'].includes(normalizedPath)) {
+        // Explicitly force global background for these pages
+        computedBgImage = background || '/default-bg.jpg';
     }
 
     const hasBg = !!computedBgImage;
@@ -121,7 +125,7 @@ export const Layout: React.FC<{
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         backgroundRepeat: 'no-repeat',
-                        opacity: 0.5
+                        // opacity has been removed to match Login screen
                     }}
                 />
             )}
@@ -182,10 +186,13 @@ export const Layout: React.FC<{
                                                 </div>
                                                 <div className="flex-grow cursor-pointer" onClick={() => { navigate('/schedule'); setIsNotificationsOpen(false); }}>
                                                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {appt.petName} - {translations[appt.type?.toLowerCase() as keyof typeof translations] || appt.type}
+                                                        {appt.petName} - {(() => {
+                                                            const key = appt.type?.toLowerCase().replace(/[^a-z0-9]/gi, '') || '';
+                                                            return translations[key as keyof typeof translations] || appt.type;
+                                                        })()}
                                                     </p>
                                                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                        {new Date(appt.dateTime).toLocaleString()}
+                                                        {new Date(appt.dateTime).toLocaleString(language === 'pt' ? 'pt-BR' : 'en-US')}
                                                     </p>
                                                 </div>
                                                 <button
