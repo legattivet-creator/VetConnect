@@ -12,6 +12,10 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         createNotificationChannel();
+
+        // Permite o zoom na tela com os dedos (pinch-to-zoom)
+        getBridge().getWebView().getSettings().setBuiltInZoomControls(true);
+        getBridge().getWebView().getSettings().setDisplayZoomControls(false); // Opcional: oculta os botões de controle de zoom (+/-) que aparecem na tela
     }
 
     private void createNotificationChannel() {
